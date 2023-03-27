@@ -42,7 +42,7 @@ def commonvoice_to_wav(audio_path: str):
     sf.write(file=f'{audio_path_wav}/{audio_file[:-3]}wav', data=audio, 
              samplerate=sr, format='wav')
 
-def get_info_from_tsv(tsv_path: str, wav_audio_folder: str):
+def get_info_from_tsv(tsv_path: str, wav_audio_folder: str) -> List[tuple]:
   """
   gets information, such as: audio filepath, duration, text - from tsv-file
   and writes it in list audio_info
