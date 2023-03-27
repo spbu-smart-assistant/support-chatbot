@@ -19,6 +19,31 @@ def read_manifest(path: str) -> list:
             manifest.append(data)
     return manifest
 
+def get_info_from_tsv(tsv_path: str, wav_audio_folder: str):
+  audio_info = []
+  is_first_line = True
+  with open(tsv_path, 'r') as f:
+    for line in tqdm(f):
+      if is_first_line:
+        is_first_line = False
+        continue
+      info_list = line.split('\t')
+      audio_filepath = f'{wav_audio_folder}/{info_list[1][:-3]}wav'
+      duration = librosa.core.get_duration(path=audio_filepath)
+      audio_info.append((audio_filepath, duration, info_list[2]))
+  return audio_info
+
+def create_manifest(data: List[tuple], output_name: str, manifest_path: str):
+  output_path = Path(manifest_path)  / output_name
+  output_path.parent.mkdir(exist_ok=True, parents=True)
+  with output_path.open(mode='w') as f:
+    for wav_path, duration, text in tqdm(data, total=len(data)):
+      if wav_path != '':
+        f.write(
+            json.dumps({'audio_filepath': os.path.abspath(wav_path), 'duration': duration, 'text': text})
+            + '\n'
+        )
+
 def load_commonvoice_vocab(manifest_root: str):
     """
     Creates set of all words from commonvoice
