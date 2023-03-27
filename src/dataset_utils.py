@@ -3,8 +3,14 @@ functions for datasets
 """
 
 import os
-import re
 import json
+import librosa
+import soundfile as sf
+from tqdm.auto import tqdm
+from typing import List
+from pathlib import Path
+import re
+from collections import defaultdict
 
 #TODO: check if it is correct
 def read_manifest(path: str) -> list:
@@ -13,13 +19,29 @@ def read_manifest(path: str) -> list:
     """
     manifest = []
     with open(path, 'r') as json_file:
-        for line in json_file:
+        for line in tqdm(json_file, desc='Reading manifest data'):
             line = line.replace("\n", "")
             data = json.loads(line)
             manifest.append(data)
     return manifest
 
 def get_info_from_tsv(tsv_path: str, wav_audio_folder: str):
+  """
+  gets information, such as: audio filepath, duration, text - from tsv-file
+  and writes it in list audio_info
+
+  Parameters:
+  -----------
+      tsv_path (str):
+          path to tsv-file
+      wav_audio_folder (str):
+          path where to save wav-clips
+          
+  Return:
+  -------
+      audio_info (List[tuple]):
+          list of (audio filepath, duration, text) for each clip 
+  """
   audio_info = []
   is_first_line = True
   with open(tsv_path, 'r') as f:
@@ -34,6 +56,18 @@ def get_info_from_tsv(tsv_path: str, wav_audio_folder: str):
   return audio_info
 
 def create_manifest(data: List[tuple], output_name: str, manifest_path: str):
+  """
+  creates json manifest file from the information stored in parameter 'data'
+
+  Parameters:
+  -----------
+      data (List[tuple]):
+          list of (audio filepath, duration, text) for each clip 
+      output_name (str):
+          name of manifest file
+      manifest_path (str):
+          folder for all manifests
+  """
   output_path = Path(manifest_path)  / output_name
   output_path.parent.mkdir(exist_ok=True, parents=True)
   with output_path.open(mode='w') as f:
@@ -50,7 +84,6 @@ def load_commonvoice_vocab(manifest_root: str):
 
     Parameters:
     -----------
-
         manifest_root (str):
             root where all manifest are
 
