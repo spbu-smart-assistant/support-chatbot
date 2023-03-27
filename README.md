@@ -18,10 +18,13 @@ Predicted without augmentation:
 ![image](https://user-images.githubusercontent.com/113451350/228051316-448b1f5d-c44f-47ca-83f0-7488fe1c8808.png)
 Predicted with augmentation:
 ![image](https://user-images.githubusercontent.com/113451350/228052469-646e0a6f-9f47-4498-8d65-2cf0e36d53ce.png)
+
 True: 
 ![image](https://user-images.githubusercontent.com/113451350/228053209-544ae0d7-aae3-47cd-a7e5-dd2e39d963d9.png)
+
 Predicted without augmentation:
 ![image](https://user-images.githubusercontent.com/113451350/228053422-d50694fb-60a7-4fe1-a814-d6c99653e926.png)
+
 Predicted with augmentation: 
 ![image](https://user-images.githubusercontent.com/113451350/228054195-be3e7988-de0c-4bfb-828f-d5328efd8a0e.png)
 
