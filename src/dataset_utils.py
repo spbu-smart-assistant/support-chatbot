@@ -10,7 +10,6 @@ from tqdm.auto import tqdm
 from typing import List
 from pathlib import Path
 import re
-from collections import defaultdict
 
 #TODO: check if it is correct
 def read_manifest(path: str) -> list:
@@ -25,6 +24,24 @@ def read_manifest(path: str) -> list:
             manifest.append(data)
     return manifest
 
+def commonvoice_to_wav(audio_path: str):
+  """
+  transforms clips from mp3 format to wav format
+
+  Parameters:
+  -----------
+      audio_path (str):
+          local path to folder with clips
+
+  """
+  audio_path_wav = '/'.join(audio_path.split('/')[:-1]) + '/wav_clips'
+  if not os.path.exists(audio_path_wav):
+    os.mkdir(audio_path_wav)
+  for audio_file in os.listdir(audio_path):
+    audio, sr = librosa.load(path=audio_path + '/' + audio_file, sr=16000)
+    sf.write(file=f'{audio_path_wav}/{audio_file[:-3]}wav', data=audio, 
+             samplerate=sr, format='wav')
+
 def get_info_from_tsv(tsv_path: str, wav_audio_folder: str):
   """
   gets information, such as: audio filepath, duration, text - from tsv-file
@@ -36,7 +53,7 @@ def get_info_from_tsv(tsv_path: str, wav_audio_folder: str):
           path to tsv-file
       wav_audio_folder (str):
           path where to save wav-clips
-          
+
   Return:
   -------
       audio_info (List[tuple]):
@@ -74,7 +91,9 @@ def create_manifest(data: List[tuple], output_name: str, manifest_path: str):
     for wav_path, duration, text in tqdm(data, total=len(data)):
       if wav_path != '':
         f.write(
-            json.dumps({'audio_filepath': os.path.abspath(wav_path), 'duration': duration, 'text': text})
+            json.dumps({'audio_filepath': os.path.abspath(wav_path), 
+                        'duration': duration, 
+                        'text': text})
             + '\n'
         )
 
