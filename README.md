@@ -30,3 +30,6 @@ Predicted with augmentation:
 
 Results: WER = 0.739, CER = 0.392 
 
+### nvidia/stt_ru_conformer_ctc_large from Hugging Face
+Results: WER = 0.4, CER = 0.25
+
