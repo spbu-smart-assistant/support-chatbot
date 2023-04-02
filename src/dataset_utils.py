@@ -10,6 +10,7 @@ from tqdm.auto import tqdm
 from typing import List
 from pathlib import Path
 import re
+from collections import defaultdict
 
 #TODO: check if it is correct
 def read_manifest(path: str) -> list:
@@ -150,3 +151,92 @@ def load_opencorp_vocab(russian_dict_file_path: str):
                 russian_dict.append(word)
 
     return set(russian_dict)
+#-------------------------------------------------------------------------------------------------------------------------------------------------
+def write_processed_manifest(data: List[tuple], original_path: str) -> str:
+    """
+    creates manifest file using processed data
+
+    Parameters:
+        data (List[tuple]):
+            processed data
+        original_path (str):
+            path to manifest with unprocessed data
+
+    Return:
+    -------
+        filepath (str):
+            path to manifest with processed data
+    """
+
+    original_manifest_name = os.path.basename(original_path)
+    new_manifest_name = original_manifest_name.replace(".json", "_processed.json")
+
+    manifest_dir = os.path.split(original_path)[0]
+    filepath = os.path.join(manifest_dir, new_manifest_name)
+    with open(filepath, 'w') as f:
+        for datum in tqdm(data, desc="Writing manifest data"):
+            datum = json.dumps(datum)
+            f.write(f"{datum}\n")
+    print(f"Finished writing manifest: {filepath}")
+    return filepath
+
+
+# calculate the character set
+def get_charset(manifest_data: list):
+    charset = defaultdict(int)
+    for row in tqdm(manifest_data, desc="Computing character set"):
+        text = row['text']
+        for character in text:
+            charset[character] += 1
+    return charset
+
+# Preprocessing steps
+def lower_text(data: List[tuple]) -> List[tuple]:
+  data["text"] = data["text"].lower()
+  data["text"] = data["text"].rstrip()
+  return data
+
+def remove_special_characters(data: List[tuple]) -> List[tuple]:
+    chars_to_ignore_regex = "[\.\,\?\:\-!;()«»…\]\[/\*–‽+&_\\½√>€™$•¼}{~—=“\"”″‟„]"
+    apostrophes_regex = "[’'‘`ʽ']"
+    data["text"] = re.sub(chars_to_ignore_regex, " ", data["text"])  # replace punctuation by space
+    data["text"] = re.sub(apostrophes_regex, "'", data["text"])  # replace different apostrophes by one
+    data["text"] = re.sub(r"'+", "'", data["text"])  # merge multiple apostrophes
+
+    # remove spaces where apostrophe marks a deleted vowel
+    # this rule is taken from https://huggingface.co/lucio/wav2vec2-large-xlsr-kinyarwanda-apostrophied
+    data["text"] = re.sub(r"([b-df-hj-np-tv-z])' ([aeiou])", r"\1'\2", data["text"])
+
+    data["text"] = re.sub(r" '", " ", data["text"])  # delete apostrophes at the beginning of word
+    data["text"] = re.sub(r"' ", " ", data["text"])  # delete apostrophes at the end of word
+    data["text"] = re.sub(r" +", " ", data["text"])  # merge multiple spaces
+    return data
+
+
+def replace_diacritics(data: List[tuple]) -> List[tuple]:
+    data["text"] = re.sub(r"[éèëēê]", "e", data["text"])
+    data["text"] = re.sub(r"[ãâāá]", "a", data["text"])
+    data["text"] = re.sub(r"[úūü]", "u", data["text"])
+    data["text"] = re.sub(r"[ôōó]", "o", data["text"])
+    data["text"] = re.sub(r"[ćç]", "c", data["text"])
+    data["text"] = re.sub(r"[ïī]", "i", data["text"])
+    data["text"] = re.sub(r"[ñ]", "n", data["text"])
+    return data
+
+
+def remove_oov_characters(data: List[tuple]) -> List[tuple]:
+    # oov_regex = "[^ 'aiuenrbomkygwthszdcjfvplxq]"
+    oov_regex = "[^ а-я]"
+    data["text"] = re.sub(oov_regex, "", data["text"])  # delete oov characters
+    data["text"] = data["text"].strip()
+    return data
+
+
+# Processing pipeline
+def apply_preprocessors(data: List[tuple], preprocessors: list) -> List[tuple]:
+    for processor in preprocessors:
+        for idx in tqdm(range(len(data)), desc=f"Applying {processor.__name__}"):
+            data[idx] = processor(data[idx])
+
+    print("Finished processing manifest!")
+    return data
