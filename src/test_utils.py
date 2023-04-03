@@ -19,9 +19,11 @@ def softmax(logits):
     return e / e.sum(axis=-1).reshape([logits.shape[0], 1])
 
 def test_asr_model(model,
+                   message: str,
                    batch_size: int,
                    manifests: list,
-                   probs: bool = False):
+                   probs: bool = False,
+                   ):
     """
     transcribing speech to text and then calculate WER and CER metrics
 
