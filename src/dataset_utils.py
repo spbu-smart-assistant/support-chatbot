@@ -132,6 +132,7 @@ def load_opencorp_vocab(russian_dict_file_path: str):
     Creates set of all words from opencorp file
 
     Parameters:
+    -----------
         russian_dict_file_path (str):
             path to file
 
@@ -151,12 +152,13 @@ def load_opencorp_vocab(russian_dict_file_path: str):
                 russian_dict.append(word)
 
     return set(russian_dict)
-#-------------------------------------------------------------------------------------------------------------------------------------------------
+
 def write_processed_manifest(data: List[tuple], original_path: str) -> str:
     """
     creates manifest file using processed data
 
     Parameters:
+    -----------
         data (List[tuple]):
             processed data
         original_path (str):
@@ -169,7 +171,8 @@ def write_processed_manifest(data: List[tuple], original_path: str) -> str:
     """
 
     original_manifest_name = os.path.basename(original_path)
-    new_manifest_name = original_manifest_name.replace(".json", "_processed.json")
+    new_manifest_name = original_manifest_name.replace(".json", 
+                                                       "_processed.json")
 
     manifest_dir = os.path.split(original_path)[0]
     filepath = os.path.join(manifest_dir, new_manifest_name)
@@ -182,7 +185,21 @@ def write_processed_manifest(data: List[tuple], original_path: str) -> str:
 
 
 # calculate the character set
-def get_charset(manifest_data: list):
+def get_charset(manifest_data: List[tuple]):
+    """
+    creates set of all unique chars in corpus of texts
+
+    Parameters:
+    -----------
+        manifest_data (List[tuple]):
+            list of (audio filepath, duration, text)
+
+    Return:
+    -------
+        charset (defaultdict(int)):
+            the set of all unique chars
+    """
+
     charset = defaultdict(int)
     for row in tqdm(manifest_data, desc="Computing character set"):
         text = row['text']
@@ -192,28 +209,73 @@ def get_charset(manifest_data: list):
 
 # Preprocessing steps
 def lower_text(data: List[tuple]) -> List[tuple]:
-  data["text"] = data["text"].lower()
-  data["text"] = data["text"].rstrip()
-  return data
+    """
+    removes capitals in texts
+
+    Parameters:
+    -----------
+        data (List[tuple]):
+            list of (audio filepath, duration, text)
+
+    Return:
+    -------
+        data (List[tuple]):
+            list of (audio filepath, duration, text) without capitals in texts
+    """
+
+    data["text"] = data["text"].lower()
+    return data
 
 def remove_special_characters(data: List[tuple]) -> List[tuple]:
+    """
+    removes special characters in texts
+
+    Parameters:
+    -----------
+        data (List[tuple]):
+            list of (audio filepath, duration, text)
+
+    Return:
+    -------
+        data (List[tuple]):
+            list of (audio filepath, duration, text) without special characters
+    """
+
     chars_to_ignore_regex = "[\.\,\?\:\-!;()«»…\]\[/\*–‽+&_\\½√>€™$•¼}{~—=“\"”″‟„]"
     apostrophes_regex = "[’'‘`ʽ']"
-    data["text"] = re.sub(chars_to_ignore_regex, " ", data["text"])  # replace punctuation by space
-    data["text"] = re.sub(apostrophes_regex, "'", data["text"])  # replace different apostrophes by one
-    data["text"] = re.sub(r"'+", "'", data["text"])  # merge multiple apostrophes
+    # replace punctuation by space
+    data["text"] = re.sub(chars_to_ignore_regex, " ", data["text"]) 
+    # replace different apostrophes by one
+    data["text"] = re.sub(apostrophes_regex, "'", data["text"]) 
+    # merge multiple apostrophes 
+    data["text"] = re.sub(r"'+", "'", data["text"])  
 
     # remove spaces where apostrophe marks a deleted vowel
     # this rule is taken from https://huggingface.co/lucio/wav2vec2-large-xlsr-kinyarwanda-apostrophied
     data["text"] = re.sub(r"([b-df-hj-np-tv-z])' ([aeiou])", r"\1'\2", data["text"])
-
-    data["text"] = re.sub(r" '", " ", data["text"])  # delete apostrophes at the beginning of word
-    data["text"] = re.sub(r"' ", " ", data["text"])  # delete apostrophes at the end of word
-    data["text"] = re.sub(r" +", " ", data["text"])  # merge multiple spaces
+    # delete apostrophes at the beginning of word
+    data["text"] = re.sub(r" '", " ", data["text"])
+    # delete apostrophes at the end of word 
+    data["text"] = re.sub(r"' ", " ", data["text"])  
+    # merge multiple spaces
+    data["text"] = re.sub(r" +", " ", data["text"])  
     return data
 
 
 def replace_diacritics(data: List[tuple]) -> List[tuple]:
+    """
+    removes diacritics in texts
+
+    Parameters:
+    -----------
+        data (List[tuple]):
+            list of (audio filepath, duration, text)
+
+    Return:
+    -------
+        data (List[tuple]):
+            list of (audio filepath, duration, text) without diacritics
+    """
     data["text"] = re.sub(r"[éèëēê]", "e", data["text"])
     data["text"] = re.sub(r"[ãâāá]", "a", data["text"])
     data["text"] = re.sub(r"[úūü]", "u", data["text"])
@@ -223,19 +285,50 @@ def replace_diacritics(data: List[tuple]) -> List[tuple]:
     data["text"] = re.sub(r"[ñ]", "n", data["text"])
     return data
 
-
+#TODO: check if it is correct
 def remove_oov_characters(data: List[tuple]) -> List[tuple]:
+    """
+    removes out-of-vocabulary characters in texts
+
+    Parameters:
+    -----------
+        data (List[tuple]):
+            list of (audio filepath, duration, text)
+
+    Return:
+    -------
+        data (List[tuple]):
+            list of (audio filepath, duration, text) without oov characters
+    """
     # oov_regex = "[^ 'aiuenrbomkygwthszdcjfvplxq]"
     oov_regex = "[^ а-я]"
-    data["text"] = re.sub(oov_regex, "", data["text"])  # delete oov characters
+    # delete oov characters
+    data["text"] = re.sub(oov_regex, "", data["text"])  
     data["text"] = data["text"].strip()
     return data
 
 
 # Processing pipeline
 def apply_preprocessors(data: List[tuple], preprocessors: list) -> List[tuple]:
+    """
+    applies preprocessing functions to text
+
+    Parameters:
+    -----------
+        data (List[tuple]):
+            list of (audio filepath, duration, text)
+        preprocessors (list):
+            list of functions to be applying
+
+    Return:
+    -------
+        data (List[tuple]):
+            list of (audio filepath, duration, text) after preprocessing
+    """
+
     for processor in preprocessors:
-        for idx in tqdm(range(len(data)), desc=f"Applying {processor.__name__}"):
+        for idx in tqdm(range(len(data)), 
+                        desc=f"Applying {processor.__name__}"):
             data[idx] = processor(data[idx])
 
     print("Finished processing manifest!")
