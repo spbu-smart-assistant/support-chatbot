@@ -123,9 +123,9 @@ def init_model(
         model.cfg.spec_augment.time_masks = 2
         model.cfg.spec_augment.time_width = 0.05
 
-        model.cfg.spec_augment.rect_freq = 50
+        model.cfg.spec_augment.rect_freq = 5
         model.cfg.spec_augment.rect_masks = 5
-        model.cfg.spec_augment.rect_time = 120
+        model.cfg.spec_augment.rect_time = 12
 
     model.spec_augmentation = model.from_config_dict(model.cfg.spec_augment)
 
