@@ -92,7 +92,8 @@ def test_asr_model(model,
     try:
         word_error = wer(test_text, described_text)
         character_error = cer(test_text, described_text)
-
+        
+        print(f'{message}:')
         print('WER:', word_error)
         print('CER:', character_error, '\n')
 
