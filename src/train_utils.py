@@ -4,12 +4,20 @@ functions for initialisation model and trainer
 
 import os
 import copy
-
 from omegaconf import OmegaConf, open_dict
-
 import pytorch_lightning as ptl
-
 from nemo.utils import logging, exp_manager
+import torch.nn as nn
+
+def enable_bn_se(m):
+  if type(m) == nn.BatchNorm1d:
+    m.train()
+    for param in m.parameters():
+      param.requires_grad_(True)
+  if 'SqueezeExcite' in type(m).__name__:
+    m.train()
+    for param in m.parameters():
+      param.requires_grad_(True)
 
 def init_model(
         model,
@@ -18,6 +26,7 @@ def init_model(
         train_batch_size: int = 1,
         valid_batch_size: int = 1,
         learning_rate: float = 3e-5,
+        freeze_encoder: bool = False,
     ):
     """
     init model config parameters
@@ -41,12 +50,21 @@ def init_model(
 
         learning_rate (float):
             starting learning rate
+        freeze_encoder (bool):
+            whether to freeze encoder weights
     
     Return:
     -------
         model for training
-
     """
+
+    if freeze_encoder:
+      model.encoder.freeze()
+      model.encoder.apply(enable_bn_se)
+      logging.info("Model encoder has been frozen, and batch normalization has been unfrozen")
+    else:
+      model.encoder.unfreeze()
+      logging.info('Model encoder has been unfrozen')
 
     cfg = copy.deepcopy(model.cfg)
 
