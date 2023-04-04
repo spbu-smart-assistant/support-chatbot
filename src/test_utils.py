@@ -8,7 +8,7 @@ import numpy as np
 
 from jiwer import wer, cer
 
-from dataset_utils import read_manifest
+# from dataset_utils import read_manifest
 
 def softmax(logits):
     """
@@ -54,8 +54,6 @@ def test_asr_model(model,
             probabilities for symbols after softmax
     """
 
-    reg = re.compile('[^а-я ]')
-
     test_text = []
     test_path = []
     for path in manifests:
@@ -63,13 +61,8 @@ def test_asr_model(model,
         manif = read_manifest(path)
 
         for sample in manif:
-
-            clear_text = sample['text']
-            clear_text = reg.sub('', sample['text'].lower().strip())
-            ' '.join(clear_text.split())
-
-            if clear_text != '':
-                test_text.append(clear_text)
+            if sample["text"] != '':
+                test_text.append(sample["text"])
                 test_path.append(sample['audio_filepath'])
 
     if probs:
