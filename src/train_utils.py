@@ -153,7 +153,7 @@ def init_trainer(
             model to train an
 
         device (str):
-            device to train on: 'cpu' or 'gpu'
+            device to train on: 'cpu' or 'cuda'
 
         num_epochs (int):
             how many epoch to train
@@ -207,5 +207,7 @@ def init_trainer(
         wandb_logger_kwargs = {'name': name_of_run,
                                'project': name_of_project, 
                                'log_model': 'all'})
+    config = OmegaConf.structured(config)
+    logdir = exp_manager.exp_manager(trainer, config)
 
     return trainer
