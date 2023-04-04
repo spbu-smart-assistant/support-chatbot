@@ -8,7 +8,7 @@ import numpy as np
 
 from jiwer import wer, cer
 
-# from dataset_utils import read_manifest
+from src.dataset_utils import read_manifest
 
 def softmax(logits):
     """
