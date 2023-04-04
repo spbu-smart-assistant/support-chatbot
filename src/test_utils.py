@@ -107,7 +107,7 @@ def test_nemo_asr_model(model,
         probs = []
         for sample in logits:
             probs.append(softmax(sample))
-        probs = np.array(probs, 'dtype=object')
+        probs = np.array(probs, dtype=object)
         described_text = None
 
     else:
