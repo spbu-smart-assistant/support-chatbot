@@ -52,6 +52,37 @@ def test_transformers_asr_model(model,
         print('Cannot calculate WER and CER')
         return test_text, transcribed_text, logits, predicted_ids
 
+def test_huggingsound_speech_recognition_model(model,
+                    batch_size: int,
+                    message: str,
+                    manifests: list,
+                    ):
+    """
+    """
+    test_text = []
+    test_path = []
+    for path in manifests:
+        mn = read_manifest(path)
+        for sample in mn:
+          if sample["text"] != '':
+                test_text.append(sample["text"])
+                test_path.append(sample['audio_filepath'])
+    transcribed_text = []
+    for path in tqdm(test_path, desc='Transcribing texts...'):
+        transcription = model.transcribe([path])
+        for i in range(batch_size):
+          transcribed_text.append(transcription[i]['transcription'])
+    try:
+        WER = wer(test_text, transcribed_text)
+        CER = cer(test_text, transcribed_text)
+        print(f'{message}:')
+        print('WER:', WER)
+        print('CER:', CER, '\n')
+        return test_text, transcribed_text, transcription
+    except:
+        print('Cannot calculate WER and CER')
+        return test_text, transcribed_text, transcription
+
 def test_nemo_asr_model(model,
                    message: str,
                    batch_size: int,
