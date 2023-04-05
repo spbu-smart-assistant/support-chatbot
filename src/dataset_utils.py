@@ -69,7 +69,7 @@ def get_info_from_tsv(tsv_path: str, wav_audio_folder: str) -> List[tuple]:
         continue
       info_list = line.split('\t')
       audio_filepath = f'{wav_audio_folder}/{info_list[1][:-3]}wav'
-      duration = librosa.core.get_duration(path=audio_filepath)
+      duration = librosa.core.get_duration(filename=audio_filepath, sr=16000)
       audio_info.append((audio_filepath, duration, info_list[2]))
   return audio_info
 
