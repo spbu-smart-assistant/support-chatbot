@@ -59,7 +59,7 @@ def get_info_from_tsv(tsv_path: str, wav_audio_folder: str) -> List[tuple]:
   -------
       audio_info (List[tuple]):
           list of (audio filepath, duration, text) for each clip 
-  """
+  """  
   audio_info = []
   is_first_line = True
   with open(tsv_path, 'r') as f:
