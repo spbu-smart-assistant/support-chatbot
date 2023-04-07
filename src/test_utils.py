@@ -3,12 +3,12 @@ functions for testing models
 """
 
 import re
-
+import torch
 import numpy as np
-
+import soundfile as sf
 from jiwer import wer, cer
-
-from dataset_utils import read_manifest
+from tqdm.auto import tqdm
+from src.dataset_utils import read_manifest
 
 def softmax(logits):
     """
@@ -18,10 +18,77 @@ def softmax(logits):
     e = np.exp(logits - np.max(logits))
     return e / e.sum(axis=-1).reshape([logits.shape[0], 1])
 
-def test_asr_model(model,
+def test_transformers_asr_model(model,
+                    processor,
+                    message: str,
+                    manifests: list,
+                    ):
+    """
+    """
+    test_text = []
+    test_path = []
+    for path in manifests:
+        mn = read_manifest(path)
+        for sample in mn:
+          if sample["text"] != '':
+                test_text.append(sample["text"])
+                test_path.append(sample['audio_filepath'])
+    transcribed_text = []
+    for path in tqdm(test_path, desc='Transcribing texts...'):
+        data, sample_rate = sf.read(path)
+        processed = processor(data, sampling_rate=sample_rate, return_tensors='pt', padding='longest')
+        logits = model(processed.input_values, attention_mask=processed.attention_mask).logits
+        predicted_ids = torch.argmax(logits, dim=-1)
+        transcription = processor.batch_decode([predicted_ids])[0]
+        transcribed_text.append(transcription)
+    try:
+        WER = wer(test_text, transcribed_text)
+        CER = cer(test_text, transcribed_text)
+        print(f'{message}:')
+        print('WER:', WER)
+        print('CER:', CER, '\n')
+        return test_text, transcribed_text, logits, predicted_ids
+    except:
+        print('Cannot calculate WER and CER')
+        return test_text, transcribed_text, logits, predicted_ids
+
+def test_huggingsound_speech_recognition_model(model,
+                    batch_size: int,
+                    message: str,
+                    manifests: list,
+                    ):
+    """
+    """
+    test_text = []
+    test_path = []
+    for path in manifests:
+        mn = read_manifest(path)
+        for sample in mn:
+          if sample["text"] != '':
+                test_text.append(sample["text"])
+                test_path.append(sample['audio_filepath'])
+    transcribed_text = []
+    for path in tqdm(test_path, desc='Transcribing texts...'):
+        transcription = model.transcribe([path])
+        for i in range(batch_size):
+          transcribed_text.append(transcription[i]['transcription'])
+    try:
+        WER = wer(test_text, transcribed_text)
+        CER = cer(test_text, transcribed_text)
+        print(f'{message}:')
+        print('WER:', WER)
+        print('CER:', CER, '\n')
+        return test_text, transcribed_text, transcription
+    except:
+        print('Cannot calculate WER and CER')
+        return test_text, transcribed_text, transcription
+
+def test_nemo_asr_model(model,
+                   message: str,
                    batch_size: int,
                    manifests: list,
-                   probs: bool = False):
+                   probs: bool = False,
+                   ):
     """
     transcribing speech to text and then calculate WER and CER metrics
 
@@ -52,8 +119,6 @@ def test_asr_model(model,
             probabilities for symbols after softmax
     """
 
-    reg = re.compile('[^а-я ]')
-
     test_text = []
     test_path = []
     for path in manifests:
@@ -61,13 +126,8 @@ def test_asr_model(model,
         manif = read_manifest(path)
 
         for sample in manif:
-
-            clear_text = sample['text']
-            clear_text = reg.sub('', sample['text'].lower().strip())
-            ' '.join(clear_text.split())
-
-            if clear_text != '':
-                test_text.append(clear_text)
+            if sample["text"] != '':
+                test_text.append(sample["text"])
                 test_path.append(sample['audio_filepath'])
 
     if probs:
@@ -78,7 +138,7 @@ def test_asr_model(model,
         probs = []
         for sample in logits:
             probs.append(softmax(sample))
-        probs = np.array(probs, 'dtype=object')
+        probs = np.array(probs, dtype=object)
         described_text = None
 
     else:
@@ -90,7 +150,8 @@ def test_asr_model(model,
     try:
         word_error = wer(test_text, described_text)
         character_error = cer(test_text, described_text)
-
+        
+        print(f'{message}:')
         print('WER:', word_error)
         print('CER:', character_error, '\n')
 

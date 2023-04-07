@@ -4,12 +4,20 @@ functions for initialisation model and trainer
 
 import os
 import copy
-
 from omegaconf import OmegaConf, open_dict
-
 import pytorch_lightning as ptl
-
 from nemo.utils import logging, exp_manager
+import torch.nn as nn
+
+def enable_bn_se(m):
+  if type(m) == nn.BatchNorm1d:
+    m.train()
+    for param in m.parameters():
+      param.requires_grad_(True)
+  if 'SqueezeExcite' in type(m).__name__:
+    m.train()
+    for param in m.parameters():
+      param.requires_grad_(True)
 
 def init_model(
         model,
@@ -18,6 +26,7 @@ def init_model(
         train_batch_size: int = 1,
         valid_batch_size: int = 1,
         learning_rate: float = 3e-5,
+        freeze_encoder: bool = False,
     ):
     """
     init model config parameters
@@ -41,12 +50,21 @@ def init_model(
 
         learning_rate (float):
             starting learning rate
+        freeze_encoder (bool):
+            whether to freeze encoder weights
     
     Return:
     -------
         model for training
-
     """
+
+    if freeze_encoder:
+      model.encoder.freeze()
+      model.encoder.apply(enable_bn_se)
+      logging.info("Model encoder has been frozen, and batch normalization has been unfrozen")
+    else:
+      model.encoder.unfreeze()
+      logging.info('Model encoder has been unfrozen')
 
     cfg = copy.deepcopy(model.cfg)
 
@@ -105,9 +123,9 @@ def init_model(
         model.cfg.spec_augment.time_masks = 2
         model.cfg.spec_augment.time_width = 0.05
 
-        model.cfg.spec_augment.rect_freq = 50
+        model.cfg.spec_augment.rect_freq = 5
         model.cfg.spec_augment.rect_masks = 5
-        model.cfg.spec_augment.rect_time = 120
+        model.cfg.spec_augment.rect_time = 12
 
     model.spec_augmentation = model.from_config_dict(model.cfg.spec_augment)
 
@@ -135,7 +153,7 @@ def init_trainer(
             model to train an
 
         device (str):
-            device to train on: 'cpu' or 'gpu'
+            device to train on: 'cpu' or 'cuda'
 
         num_epochs (int):
             how many epoch to train
@@ -189,5 +207,7 @@ def init_trainer(
         wandb_logger_kwargs = {'name': name_of_run,
                                'project': name_of_project, 
                                'log_model': 'all'})
+    config = OmegaConf.structured(config)
+    logdir = exp_manager.exp_manager(trainer, config)
 
     return trainer
