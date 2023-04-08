@@ -10,9 +10,17 @@ from jiwer import wer, cer
 from tqdm.auto import tqdm
 from src.dataset_utils import read_manifest
 
-def softmax(logits):
+def softmax(logits: list) -> list:
     """
     perfom softmax over logits from ASR model
+
+    Patameters:
+    -----------
+        softmax (list):
+            model output
+    Return:
+    -------
+        list after applying softmax function to logits 
     """
 
     e = np.exp(logits - np.max(logits))
@@ -24,7 +32,37 @@ def test_transformers_asr_model(model,
                     manifests: list,
                     ):
     """
+    transcribing speech to text by transformers asr model 
+    and then calculate WER and CER metrics
+
+    Parameters:
+    -----------
+        model:
+            model for transribing speech
+        
+        processor:
+            model to tokenized text and extract features
+
+        message (str):
+            information about model
+        
+        manifests (List):
+            list with path to manifests
+    Return:
+    -------
+        test_text (list):
+            target text
+        
+        transcribed_text (list):
+            predicted text
+        
+        logits (list):
+            model output
+
+        predicted_ids (list):
+            predicted character indexes 
     """
+  
     test_text = []
     test_path = []
     for path in manifests:
@@ -58,6 +96,33 @@ def test_huggingsound_speech_recognition_model(model,
                     manifests: list,
                     ):
     """
+    transcribing speech to text by huggingsound asr model 
+    and then calculate WER and CER metrics
+
+    Parameters:
+    -----------
+        model:
+            model for transribing speech
+
+        batch_size (int):
+            batch size for model
+
+        message (str):
+            information about
+        
+        manifests (List):
+            list with path to manifests
+
+    Return:
+    -------
+        test_text (list):
+            target text
+        
+        transcribed_text (list):
+            predicted text
+        
+        transcription (list):
+            model output
     """
     test_text = []
     test_path = []
@@ -90,13 +155,16 @@ def test_nemo_asr_model(model,
                    probs: bool = False,
                    ):
     """
-    transcribing speech to text and then calculate WER and CER metrics
+    transcribing speech to text by nemo asr model 
+    and then calculate WER and CER metrics
 
     Parameters:
     -----------
-
         model:
             model for transribing speech
+
+        message (str):
+            information about
 
         batch_size (int):
             batch for model
@@ -106,7 +174,6 @@ def test_nemo_asr_model(model,
 
         probs (bool) = False:
             if return probabilities of symbols
-
     Return:
     -------
         test_text (list):

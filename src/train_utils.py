@@ -10,6 +10,14 @@ from nemo.utils import logging, exp_manager
 import torch.nn as nn
 
 def enable_bn_se(m):
+  """
+  unfreeze batch normalization layers of encoder
+
+  Parameters:
+  -----------
+      m:
+          layer of encoder
+  """
   if type(m) == nn.BatchNorm1d:
     m.train()
     for param in m.parameters():
@@ -61,7 +69,9 @@ def init_model(
     if freeze_encoder:
       model.encoder.freeze()
       model.encoder.apply(enable_bn_se)
-      logging.info("Model encoder has been frozen, and batch normalization has been unfrozen")
+      logging.info(
+      "Model encoder has been frozen, and batch normalization has been unfrozen"
+      )
     else:
       model.encoder.unfreeze()
       logging.info('Model encoder has been unfrozen')

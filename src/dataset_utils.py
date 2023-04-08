@@ -300,7 +300,6 @@ def remove_oov_characters(data: List[tuple]) -> List[tuple]:
         data (List[tuple]):
             list of (audio filepath, duration, text) without oov characters
     """
-    # oov_regex = "[^ 'aiuenrbomkygwthszdcjfvplxq]"
     oov_regex = "[^ а-я]"
     # delete oov characters
     data["text"] = re.sub(oov_regex, "", data["text"])  
