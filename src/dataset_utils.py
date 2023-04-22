@@ -53,7 +53,7 @@ def get_info_from_tsv(tsv_path: str, wav_audio_folder: str) -> List[tuple]:
       tsv_path (str):
           path to tsv-file
       wav_audio_folder (str):
-          path where to save wav-clips
+          path to folder with wav-clips
 
   Return:
   -------
