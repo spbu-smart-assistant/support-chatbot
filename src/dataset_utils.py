@@ -35,7 +35,7 @@ def commonvoice_to_wav(audio_path: str):
           local path to folder with clips
 
   """
-  audio_path_wav = '/'.join(audio_path.split('/')[:-1]) + '/wav_clips'
+  audio_path_wav = '/'.join(audio_path.split('/')[:-1]) + f'/{audio_path.split("/")[-1]}_wav_clips'
   if not os.path.exists(audio_path_wav):
     os.mkdir(audio_path_wav)
   for audio_file in os.listdir(audio_path):
