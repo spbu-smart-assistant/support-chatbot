@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File
+import shutil
 import nemo.collections.asr as nemo_asr
 import uvicorn
 import torch
@@ -17,6 +18,9 @@ summa_model.eval()
 asr_model = nemo_asr.models.EncDecCTCModelBPE.from_pretrained(
         model_name="stt_ru_conformer_ctc_large"
     )
+
+AUDIO_FOLDER = "../FastAPI/audio/"
+
 def summarize(
     text, n_words=None, compression=None,
     max_length=1500, num_beams=3, do_sample=False, repetition_penalty=10.0,
@@ -69,6 +73,13 @@ async def process_string(input_path: str):
         summarization = future.result()
 
     return summarization
+
+@app.post("/file")
+async def handle_audio(file: UploadFile = File()):
+    with open(f"{AUDIO_FOLDER}{file.filename}", 'wb') as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return {"file_name": file.filename}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
