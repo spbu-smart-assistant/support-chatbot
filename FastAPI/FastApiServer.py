@@ -84,15 +84,6 @@ async def home_page(request: Request):
     return templates.TemplateResponse("home_page.html",
                                       {"request": request})
 
-
-@app.get("/process/{input_path}")
-async def process_string(input_path: str):
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        future = executor.submit(process_transcription, input_path)
-        summarization = future.result()
-
-    return summarization
-
 @app.post("/home")
 async def handle_audio(request: Request, file: UploadFile = File(media_type="multipart/form-data")):
     file_path = f"{AUDIO_FOLDER}{file.filename}"
@@ -104,10 +95,8 @@ async def handle_audio(request: Request, file: UploadFile = File(media_type="mul
         future = executor.submit(process_transcription, file_path)
         summarization = future.result()
 
-    print(summarization)
-
     return templates.TemplateResponse("home_page.html",
-                                      {"request": request})
+                                      {"request": request, "summarization": summarization})
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
