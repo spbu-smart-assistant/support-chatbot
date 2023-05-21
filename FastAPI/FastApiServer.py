@@ -1,13 +1,18 @@
-from fastapi import FastAPI
+import os
+
+from fastapi import FastAPI, UploadFile, File, Request
+import shutil
 import nemo.collections.asr as nemo_asr
 import uvicorn
 import torch
+from starlette.templating import Jinja2Templates
 from transformers import T5ForConditionalGeneration, T5Tokenizer
 from librosa import load, resample
 import soundfile as sf
 import concurrent.futures
 
 app = FastAPI()
+templates = Jinja2Templates(directory="templates")
 
 MODEL_NAME = 'cointegrated/rut5-base-absum'
 summa_model = T5ForConditionalGeneration.from_pretrained(MODEL_NAME)
@@ -17,6 +22,9 @@ summa_model.eval()
 asr_model = nemo_asr.models.EncDecCTCModelBPE.from_pretrained(
         model_name="stt_ru_conformer_ctc_large"
     )
+
+AUDIO_FOLDER = "../FastAPI/audio/"
+
 def summarize(
     text, n_words=None, compression=None,
     max_length=1500, num_beams=3, do_sample=False, repetition_penalty=10.0,
@@ -58,17 +66,37 @@ def process_transcription(input_path):
 
         # summarize
         summarization = summarize(transcription)
+
+        os.remove(input_path)
+
         return summarization
     except FileNotFoundError:
         return "Incorrect file name or the file is corrupted"
 
-@app.get("/process/{input_path}")
-async def process_string(input_path: str):
+
+@app.get("/")
+async def home(request: Request):
+    return templates.TemplateResponse("home.html",
+                                      {"request": request})
+
+@app.get("/home")
+async def home_page(request: Request):
+    return templates.TemplateResponse("home_page.html",
+                                      {"request": request})
+
+@app.post("/home")
+async def handle_audio(request: Request, file: UploadFile = File(media_type="multipart/form-data")):
+    file_path = f"{AUDIO_FOLDER}{file.filename}"
+
+    with open(file_path, 'wb') as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        future = executor.submit(process_transcription, input_path)
+        future = executor.submit(process_transcription, file_path)
         summarization = future.result()
 
-    return summarization
+    return templates.TemplateResponse("home_page.html",
+                                      {"request": request, "summarization": summarization})
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
