@@ -42,6 +42,7 @@ docker run -d --name mycontainer -p 80:80 SPBU-Asistiant
 - `SPBU-Asistiant` - имя собранного образа Docker.
 
 5.После успешного запуска контейнера Docker вы сможете получить доступ к вашему приложению, открыв веб-браузер и перейдя по адресу http://localhost:80.
+
 6.Для остановки контейнера Docker выполните команду:
 ```
 docker stop mycontainer
