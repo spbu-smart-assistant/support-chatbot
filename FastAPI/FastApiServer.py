@@ -14,7 +14,7 @@ import concurrent.futures
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-MODEL_NAME = 'cointegrated/rut5-base-absum'
+MODEL_NAME = 'abletobetable/rut5-base-absum-tech-support-calls'
 summa_model = T5ForConditionalGeneration.from_pretrained(MODEL_NAME)
 tokenizer = T5Tokenizer.from_pretrained(MODEL_NAME)
 summa_model.cuda() if torch.cuda.is_available() else None
