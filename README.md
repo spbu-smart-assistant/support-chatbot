@@ -6,7 +6,7 @@
 
 Пример работы сервиса:
 
-<video src='демонстрация_работы.mp4' width=480/>
+https://github.com/spbu-smart-assistant/support-chatbot/assets/109301202/a77f035e-5f1c-401f-883a-299240ea814a
 
 ### Предлагаемое решение
 
